@@ -1,0 +1,91 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package mutomvo.Mutation.Mutator.MutantBuilder;
+
+import mutomvo.Mutation.Mutator.MutantBuilder.OmnetBuilder.OmnetBuilder;
+import java.util.List;
+import mutomvo.Mutation.Mutator.MutantBuilder.ArithmeticBuilder.ArithmeticBuilder;
+import mutomvo.Mutation.Mutator.MutantBuilder.AssigmentBuilder.AssignmentBuilder;
+import mutomvo.Mutation.Mutator.MutantBuilder.ConditionalBuilder.ConditionalBuilder;
+import mutomvo.Mutation.Mutator.MutantBuilder.RelationalBuilder.RelationalBuilder;
+import mutomvo.Mutation.Config.MutationCfg;
+import mutomvo.Mutation.Mutator.MutantBuilder.ShiftBuilder.ShiftBuilder;
+import mutomvo.Mutation.Operators.Method.EnumOperator;
+import mutomvo.Mutation.Operators.MutatedOperator;
+import mutomvo.Mutation.Operators.MutationOperator;
+
+/**
+ *
+ * @author Pablo C. Cañizares
+ */
+public class MutantBuilder 
+{
+    ArithmeticBuilder ARBuilder = null;
+    RelationalBuilder RelationalBuilder = null;
+    ConditionalBuilder ConditionalBuilder = null;
+    AssignmentBuilder AssignmentBuilder = null;
+    OmnetBuilder OmnetBuilder = null;
+    ShiftBuilder ShiftBuilder = null;
+    
+    public MutantBuilder(MutationCfg Configuration)
+    {
+        //realizamos las operaciones pertinentes
+        ARBuilder = new ArithmeticBuilder();
+        RelationalBuilder = new RelationalBuilder();
+        OmnetBuilder = new OmnetBuilder();
+        ConditionalBuilder = new ConditionalBuilder();
+        AssignmentBuilder = new AssignmentBuilder();
+    
+    }
+
+    public List<MutatedOperator> generateMutants(MutationOperator Operator) 
+    {
+        EnumOperator eOperator = Operator.getOperatorType();
+        List<MutatedOperator> MutatedOperatorList = null;
+        
+        try
+        {
+            switch(eOperator)
+            {
+                case eARITHMETIC:
+                    
+                    MutatedOperatorList = ARBuilder.doMutation(Operator);
+                    break;
+
+                case eASSIGMENT:
+                    MutatedOperatorList = AssignmentBuilder.doMutation(Operator);
+                    break;
+
+                case eCONDITIONAL:
+                    MutatedOperatorList = ConditionalBuilder.doMutation(Operator);
+                    break; 
+
+                case eLOGICAL:
+                    MutatedOperatorList = LogicalBuilder.doMutation(Operator);
+                    break;
+
+                case eSHIFT:
+                    MutatedOperatorList = ShiftBuilder.doMutation(Operator);
+                    break;
+
+                case eRELATIONAL:
+                    MutatedOperatorList = RelationalBuilder.doMutation(Operator);
+                    break;
+                    
+                case eAPI:
+                    MutatedOperatorList = OmnetBuilder.doMutation(Operator);
+                    break;
+            }
+            
+        }catch(NullPointerException e)
+        {
+            System.out.printf("Null pointer catched");
+        }
+        return MutatedOperatorList;
+    }
+
+}

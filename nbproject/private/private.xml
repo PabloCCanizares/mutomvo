@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Execution/info/mutants/MutantsCollection.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/reports/readableReports/subsumingReport.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/reports/reportTemplate.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Utils/Utils.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/TabbedPanels/TestGeneratorPanel.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Execution/JavaMuTeXec.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Execution/info/mutants/mutantInfo.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Auxiliar.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/StatsPersistence.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/reportGenerator.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/graphs/graphics/graphHeatmap2d.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/MutationEngine.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/TabbedPanels/ExecutionPanelExt.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/TabbedPanels/GraphicsSelection.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/reports/readableReports/generalExtendedReport.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/reports/readableReports/generalReport.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Equivalents/EquivalentChecker.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/ReportGenerator/statsParser.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Equivalents/Md5MutantHandler.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/MutomvoGUIView.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/TabbedPanels/MutationPanel.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/TabbedPanels/ProjectsPanel.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Equivalents/EquivalentMutantInfo.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/Mutation/Parser/CDTParser/CDT/SourceParser.java</file>
+            <file>file:/home/pablo/NetBeansProjects/mutomvo/src/mutomvo/TabbedPanels/ExecutionPanelBasic.java</file>
+        </group>
+    </open-files>
+</project-private>

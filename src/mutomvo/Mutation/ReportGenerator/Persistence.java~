@@ -1,0 +1,184 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mutomvo.Mutation.Execution.mutationGraphs;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author user
+ */
+public class Persistence {
+    
+     public void saveResultsToDisk(String fileName, LinkedList<String>  dataList, boolean bPrint){
+        PrintWriter pw;
+        String strLine;
+        int nSize;
+        boolean bRet;
+        
+        nSize= dataList.size();
+        bRet = true;
+        if(nSize>0)
+        {
+            try 
+            {
+                pw = new PrintWriter(new FileOutputStream(fileName));
+
+                for (int i=0;i<nSize;i++)
+                {
+                    strLine = dataList.get(i);
+                    pw.println(strLine);
+                    
+                    if(bPrint)
+                        System.out.printf(strLine);
+                }
+               
+                pw.close();
+            } catch (FileNotFoundException ex) {
+                bRet = false;
+            }
+        }
+    }
+    public boolean saveTestSuiteFile(File persistenceTestFile, LinkedList<LinkedList<String>> testSuite)
+     {
+         boolean bRet;
+         LinkedList<String> testAux;
+         StringBuffer strBuff;
+         String strLine;
+         bRet = false;
+         
+         //Check correctness
+         if(testSuite!= null && persistenceTestFile != null)
+         {
+            bRet = true;
+            strBuff = new StringBuffer();           
+                
+            try {            
+                
+                
+                PrintWriter out = new PrintWriter(persistenceTestFile.getAbsoluteFile());
+                if(!persistenceTestFile.exists())
+                    persistenceTestFile.createNewFile();
+            
+                for(int i=0;i<testSuite.size();i++)
+                {
+                    testAux = testSuite.get(i);
+                    
+                    for(int j=0;j< testAux.size();j++)
+                    {
+                        strLine = testAux.get(j);
+                        if(strLine != null && strLine.length()>0)
+                        {
+                            strBuff.append(strLine);
+                            if(j < testAux.size()-1)
+                                strBuff.append(",");                        
+                        }                           
+                    }
+                    strBuff.append("\n");
+                }
+                out.println(strBuff.toString());
+                out.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Persistence.class.getName()).log(Level.SEVERE, null, ex);
+            }
+         }
+         else
+         {
+             System.out.printf("");
+         }
+             
+         return bRet;
+     }
+    public boolean saveContentToDisk(String fileName, String strContent, boolean bPrint){
+        PrintWriter pw;
+        String strLine;
+        int nSize;
+        boolean bRet;
+        
+        nSize= strContent.length();
+        bRet = true;
+        if(nSize>0)
+        {
+            try 
+            {
+                pw = new PrintWriter(new FileOutputStream(fileName));
+
+                pw.println(strContent);
+
+                if(bPrint)
+                    System.out.printf(strContent);
+               
+                pw.close();
+            } catch (FileNotFoundException ex) {
+                bRet = false;
+            }
+        }
+        return bRet;
+    }  
+    public LinkedList<LinkedList<String>> loadFromDisk(String strDB)
+    {              
+        BufferedReader br = null;
+        LinkedList<LinkedList<String>> retList = null;
+        LinkedList<String> lineList = null;
+        
+        System.out.printf("loadFromDisk - init\n");
+        
+        try {
+            String line;
+            String[] toks;
+        
+            //CSVParser parser=new CSVParser();            
+            int nIndex;
+            String strName;
+            boolean first=true;
+            
+            System.out.printf("Opening: %s\n", strDB);
+            File file = new File(strDB);
+            if(file.exists())
+            {
+                br = new BufferedReader(new FileReader(file));            
+                nIndex = 0;
+                retList = new LinkedList<LinkedList<String>>();
+
+                while ((line=br.readLine()) != null) 
+                {
+                    //line=line.trim();
+                    if (line.length() <= 0)     continue;
+
+                        toks=line.split(",");//parser.parseLine(line);
+                        lineList = new LinkedList<String>(Arrays.asList(toks));
+
+                    nIndex++;
+                    retList.add(lineList);
+                }   
+            }else
+            {
+                System.out.printf("Original tests does not exists");
+            }
+        } 
+        catch (IOException ex) {
+            Logger.getLogger(Persistence.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+       finally {
+            try {
+                br.close();
+            } catch (IOException ex) {              
+            }
+        }
+        System.out.printf("loadFromDisk - end\n");
+        return retList;
+    }
+}

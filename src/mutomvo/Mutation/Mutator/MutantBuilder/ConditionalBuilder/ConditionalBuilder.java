@@ -1,0 +1,81 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mutomvo.Mutation.Mutator.MutantBuilder.ConditionalBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
+import mutomvo.Mutation.Config.MutationCfg;
+import mutomvo.Mutation.Operators.Method.EnumOperator;
+import mutomvo.Mutation.Operators.MutatedOperator;
+import mutomvo.Mutation.Operators.MutationOperator;
+
+/**
+ *
+ * @author Pablo C. Cañizares
+ */
+public class ConditionalBuilder {
+
+    List<IConditionalMutation> MuOperationList;
+
+    public ConditionalBuilder() {
+        MuOperationList = new ArrayList<IConditionalMutation>();
+        //Aqui con la configuracion, que vamos a hacer un p** singleton
+        //generamos todas las operaciones que vayamos a realizar
+        IConditionalMutation COROperation = new COROperation();
+
+        if (MutationCfg.getInstance().isGenerateCOR()) {
+            MuOperationList.add(new COROperation());
+        }
+        if (MutationCfg.getInstance().isGenerateCOI()) {
+            MuOperationList.add(new COIOperation());
+        }
+        if (MutationCfg.getInstance().isGenerateCOD()) {
+            MuOperationList.add(new CODOperation());
+        }
+    }
+
+    public List<MutatedOperator> doMutation(MutationOperator Operator) {
+        List<MutatedOperator> MutatedOp = new ArrayList<MutatedOperator>();
+        int nSize = MuOperationList.size();
+        for (int i = 0; i < nSize; i++) {
+            List<MutatedOperator> MutatedLocal;
+
+            if (Operator.getOperatorType() == EnumOperator.eCONDITIONAL) {
+                if (Operator.isOperatorInsertion() && MutationCfg.getInstance().isGenerateCOI()) {
+                    //Obtenemos la lista de mutantes y la mezclamos con la total
+                    IConditionalMutation Operation = MuOperationList.get(i);
+
+                    MutatedLocal = Operation.doMutation(Operator);
+
+                    Merge(MutatedOp, MutatedLocal);
+                } else if (MutationCfg.getInstance().isGenerateCOR() || MutationCfg.getInstance().isGenerateCOD()) {
+                    //Replacement
+                    //Obtenemos la lista de mutantes y la mezclamos con la total
+                    IConditionalMutation Operation = MuOperationList.get(i);
+
+                    MutatedLocal = Operation.doMutation(Operator);
+
+                    Merge(MutatedOp, MutatedLocal);
+                }
+
+            }
+
+        }
+
+        return MutatedOp;
+    }
+
+    private void Merge(List<MutatedOperator> MutatedOp, List<MutatedOperator> MutatedLocal) {
+        int nSize = MutatedLocal.size();
+
+        for (int i = 0; i < nSize; i++) {
+            MutatedOperator oMutated = MutatedLocal.get(i);
+
+            //Merge and set the Type of mutant
+            //oMutated.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+            MutatedOp.add(oMutated);
+        }
+    }
+}

@@ -1,0 +1,691 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mutomvo.Mutation.Parser.CDTParser.indexers;
+
+import java.util.LinkedList;
+import java.util.List;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFunctionCallExpression;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTIdExpression;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTLiteralExpression;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTUnaryExpression;
+import mutomvo.Mutation.Config.MutationCfg;
+import mutomvo.Mutation.Operators.EnumOperatorClass;
+import mutomvo.Mutation.Operators.Method.Arithmetic.ArithmeticOperator;
+import mutomvo.Mutation.Operators.Method.Arithmetic.EnumARTypes;
+import mutomvo.Mutation.Operators.Method.Arithmetic.EnumUnArithmetic;
+import mutomvo.Mutation.Operators.Method.Assignment.AssingmentOperator;
+import mutomvo.Mutation.Operators.Method.Conditional.ConditionalOperator;
+import mutomvo.Mutation.Operators.Method.Conditional.EnumConditional;
+import mutomvo.Mutation.Operators.Method.EnumMuOperation;
+import mutomvo.Mutation.Operators.Method.Logical.EnumLogicalTypes;
+import mutomvo.Mutation.Operators.Method.Logical.EnumUnLogical;
+import mutomvo.Mutation.Operators.Method.Relational.RelationalOperator;
+import mutomvo.Mutation.Operators.Method.Shift.ShiftOperator;
+import mutomvo.Mutation.Operators.MutationOperator;
+import mutomvo.Mutation.Operators.Method.Logical.LogicalOperator;
+
+/**
+ *
+ * @author Pablo C. Cañizares
+ */
+public class CDTGeneralIndexer {
+
+    public List<MutationOperator> generateUnaryList(LinkedList<IASTUnaryExpression> unlist) {
+        List<MutationOperator> retList = null;
+        List<MutationOperator> partialList = null;
+
+        if (unlist.size() > 0) {
+            retList = new LinkedList<MutationOperator>();
+            for (int i = 0; i < unlist.size(); i++) {
+                MutationOperator muOperator;
+                IASTUnaryExpression exp = unlist.get(i);
+                partialList = handleUnExpression(exp); //devuelve una lista, vas añadiendo los valores a esta lista.
+                if (partialList != null) {
+
+                    for (int j = 0; j < partialList.size(); j++) {
+                        muOperator = partialList.get(j);
+                        if (!MutationCfg.getInstance().isBadLine(muOperator.getLineNumber())) {
+                            retList.add(muOperator);
+                        }
+                    }
+                }
+            }
+        }
+
+        return retList;
+    }
+
+    public List<MutationOperator> generateBinaryList(LinkedList<IASTBinaryExpression> binaryList) {
+
+        List<MutationOperator> retList = null;
+        List<MutationOperator> partialList = null;
+
+        if (binaryList.size() > 0) {
+            retList = new LinkedList<MutationOperator>();
+            for (int i = 0; i < binaryList.size(); i++) {
+                MutationOperator muOperator;
+                IASTBinaryExpression exp = binaryList.get(i);
+                partialList = handleBinExpression(exp); //devuelve una lista, vas añadiendo los valores a esta lista.
+                if (partialList != null) {
+                    for (int j = 0; j < partialList.size(); j++) {
+                        muOperator = partialList.get(j);
+                        if (!MutationCfg.getInstance().isBadLine(muOperator.getLineNumber())) {
+                            retList.add(muOperator);
+                        }
+                    }
+                }
+            }
+        }
+
+        return retList;
+    }
+
+    private List<MutationOperator> CreateBinMutantOperator(IASTExpression op1, IASTExpression op2, int nOperator) {
+        //generamos el MutantOperator
+        String strOperator1, strOperator2;
+        int nInit, nEnd, nSize, nLine;
+        MutationOperator opRetReplacement, opRetInsertionLeft, opRetInsertionRight;
+        List<MutationOperator> retList;
+
+        opRetReplacement = null;
+        nInit = nEnd = nSize = 0;
+
+        retList = new LinkedList<MutationOperator>();
+
+        //Aritméticos binarios
+        //En este caso nos viene perfecto para generar los de inserción. Ya que tenemos las dos partes del operador
+        if (isArithmetic(nOperator) && (MutationCfg.getInstance().isGenerateBinArithmetic()
+                || MutationCfg.getInstance().isGenerateInsertArithmetic() || MutationCfg.getInstance().isGenerateLOI())) {
+            if (MutationCfg.getInstance().isGenerateBinArithmetic()) {
+                opRetReplacement = new ArithmeticOperator(opToString(nOperator), EnumARTypes.eARType_BIN);
+            }
+
+            //check if op1 or op2 are null
+            strOperator1 = op1.getRawSignature();
+            strOperator2 = op2.getRawSignature();
+
+            //Check if it is neccesary to create AOIu
+            if (MutationCfg.getInstance().isGenerateAOIu() && nOperator != 6 && nOperator != 17) {
+
+                if (!strOperator1.contains("simTime") && !strOperator2.contains("simTime")) 
+                {
+                    insertAOIu(op1, op2, nOperator, retList);
+                }
+
+            }
+            //Check if it is neccesary to create LOI
+            if (MutationCfg.getInstance().isGenerateLOI() && nOperator != 6 && nOperator != 17) {
+                if (!strOperator1.contains("NULL") && !strOperator2.contains("NULL"))
+                {
+                    insertLOI(op1, op2, nOperator, retList);
+                }
+            }
+        } //Relacionales
+        else if (isRelational(nOperator) && (MutationCfg.getInstance().isGenerateRelational()
+                || MutationCfg.getInstance().isGenerateInsertArithmetic() || MutationCfg.getInstance().isGenerateLOI())) {
+
+            //check if op1 or op2 are null
+            strOperator1 = op1.getRawSignature();
+            strOperator2 = op2.getRawSignature();
+
+            if (MutationCfg.getInstance().isGenerateRelational()) {
+                opRetReplacement = new RelationalOperator(opToString(nOperator));
+            }
+
+            //Check if it is neccesary to create AOIs
+            if (MutationCfg.getInstance().isGenerateAOIu() && nOperator != 29 && nOperator != 17) {
+                if (!strOperator1.contains("simTime") && !strOperator2.contains("simTime")
+                        && !strOperator1.contains("NULL") && !strOperator2.contains("NULL")
+                        && !strOperator1.contains("dbl()") && !strOperator2.contains("dbl()")
+                        && !strOperator1.contains("double") && !strOperator2.contains("double")) {
+                    insertAOIu(op1, op2, nOperator, retList);
+                }
+            }
+            //Check if it is neccesary to create LOI
+            if (MutationCfg.getInstance().isGenerateLOI() && nOperator != 29 && nOperator != 17) {
+                if (!strOperator1.contains("simTime") && !strOperator2.contains("simTime")
+                        && !strOperator1.contains("NULL") && !strOperator2.contains("NULL")
+                        && !strOperator1.contains("dbl()") && !strOperator2.contains("dbl()")
+                        && !strOperator1.contains("double") && !strOperator2.contains("double")) {
+                    insertLOI(op1, op2, nOperator, retList);
+                }
+            }
+        } //Condicionales
+        else if (isConditional(nOperator) && (MutationCfg.getInstance().isGenerateConditional() || MutationCfg.getInstance().isGenerateLOI())) {
+
+            if (MutationCfg.getInstance().isGenerateCOR()) {
+                opRetReplacement = new ConditionalOperator(opToString(nOperator));
+            }
+
+            //Check if it is neccesary to create COI
+            if (MutationCfg.getInstance().isGenerateCOI() && nOperator != 6 && nOperator != 17) {
+                insertCOI(op1, op2, nOperator, retList);
+            }
+
+            //Check if it is neccesary to create LOI
+            if (MutationCfg.getInstance().isGenerateLOI() && nOperator != 6 && nOperator != 17) {
+                //insertLOI(op1, op2, nOperator, retList);        
+            }
+        } //Asignación
+        else if (isAssignment(nOperator) && MutationCfg.getInstance().isGenerateAssignment()) {
+            opRetReplacement = new AssingmentOperator(opToString(nOperator));
+            //Setclasses
+            opRetReplacement.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+            opRetReplacement.setSubClass(EnumMuOperation.eASOR);
+        } else if (isShift(nOperator) && MutationCfg.getInstance().isGenerateShift()) {
+            opRetReplacement = new ShiftOperator(opToString(nOperator));
+        }
+        else if (isLogical(nOperator)&& MutationCfg.getInstance().isGenerateLogical())
+        {
+            if (MutationCfg.getInstance().isGenerateLOR()) {
+                opRetReplacement = new LogicalOperator(opToString(nOperator),EnumLogicalTypes.eLogicalType_BIN);
+            }
+        }
+        if (opRetReplacement != null) {
+
+            //Aparición del operador de mutación.            
+            nInit = op1.getFileLocation().getNodeOffset() + op1.getFileLocation().getNodeLength();
+            nEnd = op2.getNodeLocations()[0].getNodeOffset();
+            nEnd = op2.getFileLocation().getNodeOffset();
+
+            //Eso es porque no hay acceso a la variable .offset del nodo ¿??¿!?!¿?!
+            if (nEnd - nInit > 10 || nEnd < nInit) {
+                //nInit = op1.getNodeLocations()[0].getNodeOffset() + op1.getNodeLocations()[0].getNodeLength();
+                //nEnd = op2.getNodeLocations()[0].asFileLocation().getNodeOffset();
+                //nEnd = op2.getFileLocation().getNodeOffset()+op2.getFileLocation().getNodeLength()+op2.getNodeLocations()[0].getNodeOffset();
+                //Viene del problemón del define!
+                nLine = op2.getFileLocation().getStartingLineNumber();
+            }
+
+            nSize = nEnd - nInit;
+            nLine = op2.getFileLocation().getStartingLineNumber();
+
+            opRetReplacement.setnPosInit(nInit);
+            opRetReplacement.setnPosEnd(nEnd);
+            opRetReplacement.setLine(nLine);
+            opRetReplacement.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+
+            if (nInit > nEnd) {
+                opRetReplacement = null;
+            }
+            if (opRetReplacement != null) {
+                retList.add(opRetReplacement);
+            }
+        }
+
+        return retList;
+    }
+
+    private void insertAOIu(IASTExpression op1, IASTExpression op2, int nOperator, List<MutationOperator> retList) {
+        MutationOperator opRetInsertionLeft, opRetInsertionRight;
+
+        //LEFT operator
+        opRetInsertionLeft = new ArithmeticOperator(EnumUnArithmetic.eAR_SUBUN.ToString(), EnumARTypes.eARType_Unary);
+        opRetInsertionLeft.setnPosInit(op1.getFileLocation().getNodeOffset());
+        opRetInsertionLeft.setnPosEnd(op1.getFileLocation().getNodeOffset());
+        opRetInsertionLeft.setLine(op2.getFileLocation().getStartingLineNumber());
+        //Setclasses
+        opRetInsertionLeft.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+        opRetInsertionLeft.setSubClass(EnumMuOperation.eAOIu);
+        retList.add(opRetInsertionLeft);
+
+        //RIGHT operator
+        opRetInsertionRight = new ArithmeticOperator(EnumUnArithmetic.eAR_SUBUN.ToString(), EnumARTypes.eARType_Unary);
+        opRetInsertionRight.setnPosInit(op2.getFileLocation().getNodeOffset());
+        opRetInsertionRight.setnPosEnd(op2.getFileLocation().getNodeOffset());
+        opRetInsertionRight.setLine(op2.getFileLocation().getStartingLineNumber());
+        //Setclasses
+        opRetInsertionRight.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+        opRetInsertionRight.setSubClass(EnumMuOperation.eAOIu);
+
+        retList.add(opRetInsertionRight);
+    }
+
+    private void insertCOI(IASTExpression op1, IASTExpression op2, int nOperator, List<MutationOperator> retList) {
+        MutationOperator opRetInsertionLeft, opRetInsertionRight;
+
+        //LEFT operator
+        opRetInsertionLeft = new ConditionalOperator(EnumConditional.eCOND_NEG.toString());
+        opRetInsertionLeft.setnPosInit(op1.getFileLocation().getNodeOffset());
+        opRetInsertionLeft.setnPosEnd(op1.getFileLocation().getNodeOffset());
+        opRetInsertionLeft.setLine(op2.getFileLocation().getStartingLineNumber());
+        //Setclasses
+        opRetInsertionLeft.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+        opRetInsertionLeft.setSubClass(EnumMuOperation.eCOI);
+        retList.add(opRetInsertionLeft);
+
+        //RIGHT operator
+        opRetInsertionRight = new ConditionalOperator(EnumConditional.eCOND_NEG.toString());
+        opRetInsertionRight.setnPosInit(op2.getFileLocation().getNodeOffset());
+        opRetInsertionRight.setnPosEnd(op2.getFileLocation().getNodeOffset());
+        opRetInsertionRight.setLine(op2.getFileLocation().getStartingLineNumber());
+        //Setclasses
+        opRetInsertionRight.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+        opRetInsertionRight.setSubClass(EnumMuOperation.eCOI);
+
+        retList.add(opRetInsertionRight);
+    }
+
+    private void insertLOI(IASTExpression op1, IASTExpression op2, int nOperator, List<MutationOperator> retList) {
+        MutationOperator opLogLeft, opLogRight;
+        opLogLeft = new LogicalOperator(EnumUnLogical.eLOG_INV.toString(), EnumLogicalTypes.eLogicalType_Unary);
+        opLogLeft.setnPosInit(op1.getFileLocation().getNodeOffset());
+        opLogLeft.setnPosEnd(op1.getFileLocation().getNodeOffset());
+        opLogLeft.setLine(op2.getFileLocation().getStartingLineNumber());
+
+        //Setclasses
+        opLogLeft.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+        opLogLeft.setSubClass(EnumMuOperation.eLOI);
+        retList.add(opLogLeft);
+
+        opLogRight = new LogicalOperator(EnumUnLogical.eLOG_INV.toString(), EnumLogicalTypes.eLogicalType_Unary);
+        opLogRight.setnPosInit(op2.getFileLocation().getNodeOffset());
+        opLogRight.setnPosEnd(op2.getFileLocation().getNodeOffset());
+        opLogRight.setLine(op2.getFileLocation().getStartingLineNumber());
+        //Setclasses
+        opLogRight.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+        opLogRight.setSubClass(EnumMuOperation.eLOI);
+        retList.add(opLogLeft);
+    }
+
+    private List<MutationOperator> CreateUnMutantOperator(CPPASTUnaryExpression op1, int nOperator) {
+        //generamos el MutantOperator
+        //int nSize, nIndex, nType, nOffset, i;
+        CPPASTIdExpression idExp;
+        int nInit, nEnd, nSize, nLine, nameSize;
+        MutationOperator opRet, opDelete;
+        List<MutationOperator> retList;
+        String nodeName;
+
+        retList = new LinkedList<MutationOperator>();
+        opRet = null;
+        nInit = nEnd = nSize = 0;
+
+        nInit = op1.getNodeLocations()[0].getNodeOffset() + op1.getNodeLocations()[0].getNodeLength();
+
+        //Aritméticos unarios
+        if (MutationCfg.getInstance().isGenerateArithmetic()) {
+
+            //TODO: Echarle un ojito a esto, a ver como se comportan los ++ y --
+            if (isUnaryArithmetic(nOperator) && isShortCutArithmetic(nOperator)) {
+                //test = op1.getOperand().getValueCategory();
+                if (op1.getOperand() instanceof CPPASTIdExpression) {
+
+                    if (MutationCfg.getInstance().isGenerateAORs()) {
+                        opRet = new ArithmeticOperator(opUnaryToString(nOperator), EnumARTypes.eARType_SHORT);
+                    }
+
+                    idExp = (CPPASTIdExpression) op1.getOperand();
+                    nodeName = idExp.getName().toString();
+                    int i = idExp.getLength();
+
+                    nSize = (op1.getNodeLocations()[0].getNodeLength()) - nodeName.length();
+
+                    //PostDecremento
+                    if (nOperator == 9 || nOperator == 10) {
+                        nInit = op1.getNodeLocations()[0].getNodeOffset() + op1.getNodeLocations()[0].getNodeLength() - nSize;
+                        nEnd = op1.getNodeLocations()[0].getNodeOffset() + op1.getNodeLocations()[0].getNodeLength();
+                    } else {
+                        //Predecremento                
+                        nInit = op1.getNodeLocations()[0].getNodeOffset();
+                        nEnd = op1.getNodeLocations()[0].getNodeOffset() + nSize;
+                    }
+                    if (MutationCfg.getInstance().isGenerateAODs()) {
+                        opDelete = new ArithmeticOperator(opUnaryToString(nOperator), EnumARTypes.eARType_SHORT);
+                        opDelete.setnPosInit(nInit);
+                        opDelete.setnPosEnd(nEnd);
+                        opDelete.setLine(op1.getFileLocation().getStartingLineNumber());
+                        //Setclasses
+                        opDelete.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+                        opDelete.setSubClass(EnumMuOperation.eAODs);
+
+                        retList.add(opDelete);
+                    }
+                }
+            } else if (isUnaryCond(nOperator) && MutationCfg.getInstance().isGenerateCOD()) {
+                nInit = op1.getNodeLocations()[0].getNodeOffset();
+                nEnd = nInit + 1;
+                opRet = new ConditionalOperator(opUnaryToString(nOperator));
+                opRet.setSubClass(EnumMuOperation.eCOD);
+            }
+
+            //Esta parte parece que no se puede parsear del todo bien. Viene incluido el offset en el operador
+            //currentIteration++ -> size=18.
+            //Truco: contar el número de bytes del nombre y sabiendo el tipo de operador montas el mutante
+            if (opRet != null) {
+
+                nLine = op1.getFileLocation().getStartingLineNumber();
+                opRet.setnPosInit(nInit);
+                opRet.setnPosEnd(nEnd);
+                opRet.setLine(nLine);
+                opRet.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+                if (nInit > nEnd) {
+                    nEnd = 0;
+                }
+                retList.add(opRet);
+            }
+
+        }
+        //Aritmetico logico
+        else if(MutationCfg.getInstance().isGenerateLOD())
+        {
+        
+            opDelete = new ArithmeticOperator(opUnaryToString(nOperator), EnumARTypes.eARType_SHORT);
+            opDelete.setnPosInit(nInit);
+            opDelete.setnPosEnd(nEnd);
+            opDelete.setLine(op1.getFileLocation().getStartingLineNumber());
+            //Setclasses
+            opDelete.setOperatorClass(EnumOperatorClass.eGENERALCLASS);
+            opDelete.setSubClass(EnumMuOperation.eAODs);
+
+            retList.add(opDelete);
+        }
+        return retList;
+    }
+
+    private List<MutationOperator> handleBinExpression(IASTBinaryExpression exp) {
+        IASTExpression op1, op2;
+        int nOperator, nPos;
+        MutationOperator opRet;
+        List<MutationOperator> retList;
+
+        retList = null;
+        op1 = op2 = null;
+        nPos = nOperator = 0;
+
+        op1 = exp.getOperand1();
+        op2 = exp.getOperand2();
+        nOperator = exp.getOperator();
+        nPos = exp.getNodeLocations()[0].getNodeOffset();
+        if (MutationCfg.getInstance().isDebugMode()) {
+            System.out.printf("CreateBinMutantOperator - Operator: %d\n", nOperator);
+        }
+
+        if (op1 != null & op2 != null) {
+            retList = CreateBinMutantOperator(op1, op2, nOperator);
+        }
+
+        return retList;
+    }
+
+    private List<MutationOperator> handleUnExpression(IASTUnaryExpression exp) {
+        MutationOperator opRet = null;
+        int nOperator;
+        List<MutationOperator> retList;
+
+        nOperator = exp.getOperator();
+        if (MutationCfg.getInstance().isDebugMode()) {
+            System.out.printf("CreateUnaryMutantOperator - Operator: %d\n", nOperator);
+        }
+
+        retList = CreateUnMutantOperator((CPPASTUnaryExpression) exp, nOperator);
+
+        return retList;
+    }
+
+    private void handleFunExpression(CPPASTFunctionCallExpression op) {
+        //
+    }
+
+    private String toStrBinExpression(IASTBinaryExpression exp) {
+        IASTExpression op1, op2;
+        int nOperator;
+        String strReturn = "";
+        op1 = op2 = null;
+
+        op1 = exp.getOperand1();
+        op2 = exp.getOperand2();
+        nOperator = exp.getOperator();
+
+        int nPos = exp.getNodeLocations()[0].getNodeOffset();
+
+        System.out.println("· " + Integer.toString(exp.getNodeLocations()[0].getNodeOffset()) + " + " + Integer.toString(nPos) + "\n");
+        if (op1 != null & op2 != null) {
+            if (isBaseCase(op1, op2)) {
+
+                CreateBinMutantOperator(op1, op2, nOperator);
+            } else {
+                //Hay algún caso recursivo
+                //Dependiendo del tipo, vemos que hacemos
+                //Si es Binario, cosa clara
+                if (op1 instanceof IASTBinaryExpression) {
+                    handleBinExpression((IASTBinaryExpression) op1);
+                } else if (op1 instanceof IASTUnaryExpression) {
+                    handleUnExpression((IASTUnaryExpression) op1);
+                } else if (op1 instanceof CPPASTFunctionCallExpression) {
+                    handleFunExpression((CPPASTFunctionCallExpression) op1);
+                }
+            }
+        }
+
+        return strReturn;
+    }
+
+    public boolean isBaseCase(IASTExpression op) {
+        boolean bOp;
+
+        bOp = false;
+
+        if (op instanceof CPPASTIdExpression
+                || op instanceof CPPASTLiteralExpression) {
+            bOp = true;
+        }
+
+        return bOp;
+    }
+
+    public boolean isBaseCase(IASTExpression op1, IASTExpression op2) {
+        boolean bOp1, bOp2;
+
+        bOp1 = bOp2 = false;
+
+        if (op1 instanceof CPPASTIdExpression || op1 instanceof CPPASTFunctionCallExpression
+                || op1 instanceof CPPASTLiteralExpression) {
+            bOp1 = true;
+        }
+        if (op2 instanceof CPPASTIdExpression || op2 instanceof CPPASTFunctionCallExpression
+                || op2 instanceof CPPASTLiteralExpression) {
+            bOp2 = true;
+        }
+
+        return bOp1 && bOp2;
+    }
+
+    private String opUnaryToString(int nOperator) {
+        String strRet = "";
+        //Short-cut
+        switch (nOperator) {
+            case 9:
+            case 0:
+                strRet = "++";
+                break;
+
+            case 10:
+            case 1:
+                strRet = "--";
+                break;
+
+            case 2:
+                strRet = "+";
+                break;
+
+            case 3:
+                strRet = "-";
+                break;
+            case 7:
+                strRet = "!";
+                break;
+        }
+
+        return strRet;
+    }
+
+    private String opToString(int nOperator) {
+        String strRet = "";
+
+        switch (nOperator) {
+            case 1:
+                strRet = "*";
+                break;
+            case 2:
+                strRet = "/";
+                break;
+            case 3:
+                strRet = "%";
+                break;
+            case 4:
+                strRet = "+";
+                break;
+            case 5:
+                strRet = "-";
+                break;
+            case 6:
+                strRet = "<<";
+                break;
+            case 7:
+                strRet = ">>";
+                break;
+            case 8:
+                strRet = "<";
+                break;
+            case 9:
+                strRet = ">";
+                break;
+            case 10:
+                strRet = "<=";
+                break;
+            case 11:
+                strRet = ">=";
+                break;
+            case 12:
+                strRet = "&";
+                break;
+            case 13:
+                strRet = "^";
+                break;
+            case 14:
+                strRet = "|";
+                break;
+            case 15:
+                strRet = "&&";
+                break;
+            case 16:
+                strRet = "||";
+                break;
+            case 17:
+                strRet = "=";
+                break;
+            case 18:
+                strRet = "*=";
+                break;
+            case 19:
+                strRet = "/=";
+                break;
+            case 20:
+                strRet = "%=";
+                break;
+            case 21:
+                strRet = "+=";
+                break;
+            case 22:
+                strRet = "-=";
+                break;
+            case 23:
+                strRet = "<<="; //shiftLeftAssign
+                break;
+            case 24:
+                strRet = ">>="; //shiftRightAssign
+                break;
+            case 25:
+                strRet = "&=";
+            case 26:
+                strRet = "^=";
+                break;
+            case 27:
+                strRet = "|=";
+                break;
+            case 28:
+                strRet = "==";
+                break;
+            case 29:
+                strRet = "!=";
+                break;
+            case 30:
+                strRet = ".";
+                break;
+            case 31:
+                strRet = "->";
+                break;
+            case 32:
+                strRet = "max";
+                break;
+            case 33:
+                strRet = "min";
+                break;
+        }
+
+        return strRet;
+    }
+
+    private boolean isRelational(int nOperator) {
+        return (nOperator >= 8 && nOperator <= 11) || nOperator == 28 || nOperator == 29;
+    }
+
+    private boolean isArithmetic(int nOperator) {
+        // 1 - 5: {*, /, %, +, -}
+        return (nOperator >= IASTBinaryExpression.op_multiply
+                && nOperator <= IASTBinaryExpression.op_minus);
+    }
+
+    private boolean isConditional(int nOperator) {
+        // 12 - 16: {&, ^, |, &&, ||}
+        return (nOperator >= IASTBinaryExpression.op_binaryAnd
+                && nOperator <= IASTBinaryExpression.op_logicalOr);
+    }
+
+    private boolean isAssignment(int nOperator) {
+        // 18 - 27: 
+        return (nOperator >= 18 && nOperator <= 27);
+    }
+
+    private boolean isShift(int nOperator) {
+        // 6 - 7: 
+        return (nOperator >= IASTBinaryExpression.op_shiftLeft
+                && nOperator <= IASTBinaryExpression.op_shiftRight);
+    }
+
+    private boolean isShortCutArithmetic(int nOperator) {
+        return (nOperator == 0 || nOperator == 1 || nOperator == 9 || nOperator == 10);
+    }
+
+    private boolean isUnaryArithmetic(int nOperator) {
+        return (nOperator == IASTUnaryExpression.op_prefixIncr
+                || nOperator == IASTUnaryExpression.op_prefixDecr
+                || nOperator == IASTUnaryExpression.op_postFixIncr
+                || nOperator == IASTUnaryExpression.op_postFixDecr
+                || nOperator == IASTUnaryExpression.op_plus
+                || nOperator == IASTUnaryExpression.op_minus);
+    }
+
+    private boolean isUnaryCond(int nOperator) {
+        return (nOperator == IASTUnaryExpression.op_not);
+    }
+    private boolean isUnaryLogical(int nOperator) {
+        
+        //TODO: We dont know what the ~ operator is
+        return false;
+        //return (nOperator == IASTUnaryExpression.op_not);
+    }    
+    // 12 - 13: {&, ^, |}
+    private boolean isLogical(int nOperator) {
+                return (nOperator == IASTBinaryExpression.op_binaryAnd
+                        || nOperator == IASTBinaryExpression.op_binaryXor
+                        || nOperator == IASTBinaryExpression.op_binaryOr);
+                
+    }
+}

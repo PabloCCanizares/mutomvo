@@ -1,0 +1,114 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mutomvo.Mutation.Execution.mutationGraphs;
+
+import mutomvo.Mutation.Execution.mutationGraphs.reports.reportTemplate;
+import java.io.File;
+import java.util.LinkedList;
+import mutomvo.Mutation.Execution.info.mutants.MutantsExecutionInfo;
+import mutomvo.Mutation.Execution.mutationGraphs.reports.readableReports.generalExtendedReport;
+import mutomvo.Mutation.Execution.mutationGraphs.reports.readableReports.generalReport;
+import mutomvo.Mutation.Execution.mutationGraphs.reports.binaryReports.heathMapReport;
+import mutomvo.Mutation.Execution.mutationGraphs.reports.binaryReports.killMapReport;
+
+/**
+ *
+ * @author Pablo C. Cañizares 
+ */
+public class reportGenerator extends statsParser{
+    
+    
+    LinkedList<String> appList;
+    StatsPersistence m_oSaver;
+    File fLocation;
+    public void reportGenerator()
+    {
+        appList = new LinkedList<String>();
+        m_oSaver = new StatsPersistence();        
+    }   
+    
+    public boolean genReport(reportTemplate genReport, String strApp)
+    {
+        boolean bRet;
+        String strReport, strFile;
+        
+        bRet = false;
+        strReport = genReport.genReport(mExecInfoList);
+
+        fLocation = new File(MAIN_FOLDER+File.separator+strApp);
+        if(fLocation.exists())
+        {
+            if(m_oSaver == null)
+                m_oSaver = new StatsPersistence();
+            bRet = m_oSaver.saveContentToDisk(fLocation.getAbsolutePath()+File.separator+genReport.getReportName(), strReport, false);
+        }
+        return bRet;
+    }
+    
+    
+    public boolean scanStats()
+    {
+        boolean bRet = false;
+        File fLocation;
+        
+        if(appList == null)
+            appList = new LinkedList<String>();
+        
+        fLocation = new File(MAIN_FOLDER);
+        if(fLocation.exists())
+        {
+            //Getting all the elements of a folder...                    
+            File[] listOfFiles = fLocation.listFiles();
+
+            for (File file : listOfFiles) {
+                if (file.isDirectory()) {
+
+                    System.out.println(file.getName());
+                    appList.add(file.getName());
+                    bRet = true;
+                }
+            }
+        }
+            
+        return bRet;
+    }
+
+    public LinkedList<String> getAppStats() {
+        return appList;
+    }
+    MutantsExecutionInfo getExecutionInfo()
+    {
+        return mExecInfoList;
+    }
+    public boolean generateReport(String strApp) {
+        
+        boolean bRet;
+        String strReport, strFile;
+        
+        bRet =false;
+        if(doParse(strApp))
+        {
+            if(mExecInfoList!= null)
+            {
+                //Lets generate general report
+                // TODO: CAMBIO PARA LAS GRAFICAS!!!!!
+                reportTemplate genReport = (reportTemplate) new generalExtendedReport();
+                reportTemplate genReport2 = (reportTemplate) new generalReport();
+                reportTemplate genReport3 = (reportTemplate) new killMapReport();
+                reportTemplate genReport4 = (reportTemplate) new heathMapReport();
+                
+                genReport(genReport, strApp);
+                genReport(genReport2, strApp);
+                genReport(genReport3, strApp);
+                genReport(genReport4, strApp);
+            }
+        }
+        return bRet;
+    }
+
+    File getLocation() {
+        return fLocation;
+    }
+}

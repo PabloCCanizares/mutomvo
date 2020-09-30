@@ -1,0 +1,24 @@
+Generales:
+*Hacer que funcione la ejecucion.
+    - Threads.
+    - Correcto kill. (Podemos explorar el uso del comando timeout)
+    - Nada de bloqueos.
+*Probar que el sistema de gráficas funciona.
+*Subsumed.
+*Equivalents.
+*Filter lines.
+*Mostrar feedback mientras genera mutantes, hace lo que sea.
+
+Visuales:
+-Generar un nuevo proyecto de una forma más intuitiva.
+-Cuando un proyecto esté cargado, marcarlo de alguna forma.
+
+-------------------------------------------------------------------------------
+Parciales:
+-Hacer un panel para introducir los valores de la ejecucion generica:
+ - Compilation line, execution line, etc.
+- Permitir la inclusion de variables de entorno para la ejecucion. Ej: env.put("TCL_LIBRARY", "/usr/share/tcltk/tcl8.4");
+-------------------------------------------------------------------------------
+Futuro:
+* Permitir mutar un proyecto completo, basado en una carpeta.
+* Tratar de generar un meta-mutante.

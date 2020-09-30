@@ -1,0 +1,77 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mutomvo.Mutation.Execution.mutationGraphs;
+
+import mutomvo.Mutation.Execution.mutationGraphs.graphs.graphTemplate;
+import java.awt.geom.Path2D;
+import java.io.File;
+import javax.swing.JPopupMenu.Separator;
+import mutomvo.Mutation.Execution.auxiliars.CommandExec;
+import mutomvo.Mutation.Execution.info.mutants.MutantsExecutionInfo;
+import mutomvo.Mutation.Execution.mutationGraphs.graphs.graphics.graphHeatmap2d;
+import mutomvo.Mutation.Execution.mutationGraphs.graphs.graphics.graphHeatmap3d;
+import mutomvo.Mutation.Execution.mutationGraphs.graphs.graphics.graphKillmap2d;
+import mutomvo.Mutation.Execution.mutationGraphs.graphs.graphics.graphKillmap3d;
+
+/**
+ *
+ * @author user
+ */
+public class graphGenerator {
+
+    reportGenerator reporter;
+    Persistence m_oSaver;
+    public graphGenerator() {
+        
+        m_oSaver= new Persistence();
+    }
+
+    public boolean generateGraph(reportGenerator reporter) {
+        
+        boolean bRet =false;
+        MutantsExecutionInfo exeInfo;
+        String strReport;
+        File fLocation;
+        graphTemplate grapGen, grapGen3d;
+        CommandExec com;
+        this.reporter = reporter;
+        if(reporter != null)
+        {
+            com = new CommandExec();
+            exeInfo = reporter.getExecutionInfo();
+            
+            if(exeInfo != null)
+            {
+                //TODO:: Cambiar x dios 2k!
+                //grapGen = new graphKillmap2d();
+                grapGen = new graphHeatmap2d();
+                
+                
+                strReport = grapGen.genGraph(exeInfo);
+                fLocation = reporter.getLocation();
+                if(fLocation != null)
+                    m_oSaver.saveContentToDisk(fLocation.getAbsolutePath()+File.separatorChar+grapGen.getGraphName(), strReport, false);
+                
+                //ejecutamos comando para generar el bicho
+                com.execCommand("cd "+fLocation.getAbsolutePath()+File.separatorChar+" && gnuplot "+grapGen.getGraphName());
+            
+                //grapGen3d = new graphKillmap3d();
+                grapGen3d = new graphHeatmap3d();
+                strReport = grapGen3d.genGraph(exeInfo);
+                fLocation = reporter.getLocation();
+                if(fLocation != null)
+                    m_oSaver.saveContentToDisk(fLocation.getAbsolutePath()+File.separatorChar+grapGen3d.getGraphName(), strReport, false);
+                
+                //ejecutamos comando para generar el bicho
+                com.execCommand("cd "+fLocation.getAbsolutePath()+File.separatorChar+" && gnuplot "+grapGen3d.getGraphName());
+            
+                
+            }
+        }
+            
+        return bRet;
+    }
+    
+}
