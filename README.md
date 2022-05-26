@@ -1,8 +1,7 @@
 # MuTomVo-C: MUTatiOn testing fraMework designed for supercomputer enVirOnments
 
 MuTomVo-C is a lightweight, standalone mutation testing framework designed for measuring the suitability of test suites in the C programming language.
-
-For this, it supports a suite of X mutation operators, and a mechanism that allows the user to design its own mutation operators based on program API. With respect to the test generator, MuTomVo-C provides a random test generator engine that aids to create test cases easily.
+For this, it supports a suite of 15 mutation operators, and a mechanism that allows the user to design its own mutation operators based on program API. With respect to the test generator, MuTomVo-C provides a random test generator engine that aids to create test cases easily.
 
 As a novelty, this framework focuses on providing all the mechanisms necessaries to be deployed and executed in supercomputer environments.
 
